@@ -1,0 +1,57 @@
+plugins {
+  id 'idea'
+}
+
+group 'io.fleak.zephflowexamples'
+apply plugin: 'java'
+apply plugin: 'java-library'
+
+ext {
+  licenseName = 'Apache License, Version 2.0'
+  licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+
+  javaVersion = '21'
+
+  slf4jVersion = '2.0.16'
+}
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+
+idea {
+  module {
+    downloadJavadoc = true
+    downloadSources = true
+  }
+}
+
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+}
+
+repositories {
+  mavenCentral() // Keep your existing repositories
+
+  // Add GitHub Packages repository
+  maven {
+    name = "GitHubPackages"
+    url = uri("https://maven.pkg.github.com/fleaktech/zephflow-core")
+    credentials {
+      username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+      password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+    }
+  }
+}
+
+dependencies {
+  implementation 'io.fleak.zephflow:sdk:0.1.0'
+  implementation("org.slf4j:slf4j-api:${slf4jVersion}")
+  implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+  implementation("org.apache.logging.log4j:log4j-core:2.20.0")
+  implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+}
