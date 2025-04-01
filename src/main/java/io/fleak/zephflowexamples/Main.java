@@ -364,7 +364,110 @@ dict(
                             .grokExpression(
                                 "Built %{WORD:direction} %{WORD:protocol} connection %{NUMBER:connection_id} for %{WORD:source_interface}:%{IP:source_ip}/%{NUMBER:source_port} \\(%{IP:source_mapped_ip}/%{NUMBER:source_mapped_port}\\) to %{WORD:dest_interface}:%{IP:dest_ip}/%{NUMBER:dest_port} \\(%{IP:dest_mapped_ip}/%{NUMBER:dest_mapped_port}\\)")
                             .build())
-                    .build());
+                    .build())
+            .eval(
+"""
+dict(
+  url=dict(
+    port=case(
+      $.source_interface == 'outside' => parse_int($.source_port),
+      _ => null
+    ),
+    scheme='dns',
+    hostname=case(
+      $.source_interface == 'outside' => $.source_ip,
+      _ => null
+    )
+  ),
+  time=ts_str_to_epoch($.timestamp, 'MMM dd yyyy HH:mm:ss'),
+  proxy=dict(
+    ip=$.source_ip,
+    port=parse_int($.source_port),
+    type=case(
+      $.source_interface == 'outside' => 'Server',
+      _ => 'Unknown'
+    ),
+    domain=$.source_interface,
+    type_id=case(
+      $.source_interface == 'outside' => 1,
+      _ => 0
+    ),
+    hostname=$.source_ip
+  ),
+  status=case(
+    $.message_number == '302015' => 'Success',
+    _ => null
+  ),
+  message=$.message_text,
+  traffic=dict(
+    bytes=null,
+    packets=null,
+    bytes_in=null,
+    bytes_out=null,
+    packets_in=null,
+    packets_out=null
+  ),
+  metadata=dict(
+    product=dict(
+      name='Cisco ASA',
+      vendor_name='Cisco'
+    ),
+    version="1.4.0",
+    log_name='ASA',
+    log_level=$.level,
+    event_code=$.message_number,
+    log_provider=$.appName,
+    original_time=$.timestamp
+  ),
+  type_uid=400101,
+  class_uid=4001,
+  status_id=case(
+    $.message_number == '302015' => 1,
+    _ => 0
+  ),
+  activity_id=1,
+  severity_id=1,
+  status_code=$.message_number,
+  category_uid=4,
+  dst_endpoint=dict(
+    ip=$.dest_ip,
+    port=$.dest_port,
+    domain=$.dest_interface,
+    hostname=$.deviceId
+  ),
+  src_endpoint=dict(
+    ip=$.source_ip,
+    port=$.source_port,
+    domain=$.source_interface,
+    type_id=case(
+      $.source_interface == 'outside' => 1,
+      _ => 0
+    ),
+    hostname=case(
+      $.source_interface == 'outside' => $.source_ip,
+      _ => null
+    )
+  ),
+  status_detail=case(
+    $.message_number == '302015' => 'Built ' + $.direction + ' UDP connection ' + $.connection_id + ' for ' + $.source_interface + ':' + $.source_ip + '/' + $.source_port + ' to ' + $.dest_interface + ':' + $.dest_ip + '/' + $.dest_port,
+    _ => null
+  ),
+  connection_info=dict(
+    uid=$.connection_id,
+    boundary='External',
+    direction=$.direction,
+    boundary_id=3,
+    direction_id=case(
+      $.direction == 'outbound' => 2,
+      $.direction == 'inbound' => 1,
+      _ => 0
+    ),
+    protocol_name=lower($.protocol),
+    protocol_ver_id=4
+  ),
+  timezone_offset=0
+)
+""");
     var msg302016Flow =
         asaHeaderParsedFlow
             .filter("$.message_number=='302016'")
