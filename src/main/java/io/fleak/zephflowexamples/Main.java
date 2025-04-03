@@ -976,7 +976,7 @@ dict(
   )
 )
 """);
-    var jsonParsedFlow =
+    var ocsfFlow =
         ZephFlow.merge(
             msg106023Flow,
             msg113019Flow,
@@ -987,7 +987,7 @@ dict(
             msg302016Flow,
             msg305011Flow,
             msg305012Flow);
-    var outputFlow = jsonParsedFlow.stdoutSink(EncodingType.JSON_OBJECT);
+    var outputFlow = ocsfFlow.stdoutSink(EncodingType.JSON_OBJECT);
     outputFlow.execute("job_id", "test_env", "test_service");
   }
 }
